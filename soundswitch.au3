@@ -1,14 +1,10 @@
 #cs ----------------------------------------------------------------------------
 
 	AutoIt Version: 3.3.0.0
-	Author:         myName
-
-	Script Function:
-	Template AutoIt script.
+	Author:         Dustin Wyatt
 
 #ce ----------------------------------------------------------------------------
 
-; Script Start - Add your code below here
 #include <Color.au3>
 #include <Array.au3>
 
@@ -34,11 +30,9 @@ Global $Set2 = IniRead("sound_switch.ini", "Speakers", "Set2", "error")
 Global $icon_hide = Int(IniRead("sound_switch.ini", "Options", "HideIcon", 0))
 Global $sample_width = 4 - 1
 Global $sample_height = 4 - 1
-;~ HotKeySet('^!{F9}', 'SwitchSpeakerCount')
+
 For $key = 1 To $hotkeys[0][0]
 	$msg = StringFormat("Setting %s to %s", $hotkeys[$key][1], $hotkeys[$key][0])
-;~ 	MsgBox(0, 'what', $msg)
-;~ 	$err = HotKeySet('"'& $hotkeys[$key][1]&'"', $hotkeys[$key][0])
 	$err = HotKeySet($hotkeys[$key][1], $hotkeys[$key][0])
 	If $err == 0 Then
 		$errmsg_fmt = "Error setting %s to %s."
@@ -50,18 +44,16 @@ Next
 If $icon_hide Then
 	Opt("TrayIconHide", $icon_hide)
 EndIf
-;~ ---------------------------------------------------------------------------------------------------------------------
 
 While 1
 	Sleep(10)
 WEnd
 
-
 #Region Action Functions
 Func SwitchSpeakerCount()
 	OpenSound()
 	$states = ItemStates()
-;~ 	_ArrayDisplay($states)
+
 	For $item = 0 To UBound($states) - 1
 		If $states[$item][0] Then
 			$device = $item
@@ -323,14 +315,14 @@ Func ItemStates()
 		ToggleDiscMenuItem()
 	EndIf
 	$item_count = ControlListView($title, $text, $ctrl, "GetItemCount")
-;~ 	MsgBox(0, "items in list", $item_count)
+
 	Dim $item_states[$item_count][2]
 	For $i = 0 To $item_count - 1
 		$item_state = IsDef($i)
 		$item_states[$i][0] = $item_state[0]
 		$item_states[$i][1] = $item_state[1]
 	Next
-;~ 	_ArrayDisplay($item_states)
+
 	Return $item_states
 EndFunc   ;==>ItemStates
 
@@ -348,11 +340,11 @@ Func IsDef($item)
 		ControlListView($title, $text, $ctrl, "Select", $item)
 		$EnCheck = ControlCommand("Sound", "Playback", "Button2", "IsEnabled")
 		If Not $EnCheck Then
-;~ 			MsgBox(0, "not enabled", "item isn't enabled")
+
 			Dim $results[2] = [True, True]
 			return $results
 		EndIf
-;~ 		ControlClick($title, $text, "Button2", "primary", 1, 89, 22)
+
 		ControlClick($title, $text, "Button2", "primary", 1, 83, 10)
 		$hWND = WinGetHandle($ContextClass)
 		WinMove($hWND, "", 0, 0, 250, 250, 1)
@@ -463,8 +455,6 @@ Func AvgColor($left, $top, $right, $bottom, $hWND)
 	$color_total = 0
 	For $x = $left To $right
 		For $y = $top To $bottom
-;~ 			TrayTip("what", String($x) & ", " & String($y), 1)
-;~ 			MouseMove($x, $y)
 			$color = PixelGetColor($x, $y, $hWND)
 			$pixel_color = _ColorGetBlue($color) + _ColorGetGreen($color) + _ColorGetRed($color)
 			$color_total += $pixel_color
