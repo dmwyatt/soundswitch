@@ -306,84 +306,34 @@ EndFunc
 
 
 Func ItemStates()
-	If ShowingDisabled() Then
-		$DisabledTog = True
-		ToggleDisabledMenuItem()
-	EndIf
-	If ShowingDisconnected() Then
-		$DisconnectedTog = True
-		ToggleDiscMenuItem()
-	EndIf
 	$item_count = ControlListView($title, $text, $ctrl, "GetItemCount")
-
 	Dim $item_states[$item_count][2]
+
+	$found_comm = False
 	For $i = 0 To $item_count - 1
-		$item_state = IsDef($i)
-		$item_states[$i][0] = $item_state[0]
-		$item_states[$i][1] = $item_state[1]
+		$status_text = ControlListView($title, $text, $ctrl, "GetText", $i, 2)
+		If $status_text = "Default Device" Then
+			$item_states[$i][0] = True
+			$found_def = $i
+		Else
+			$item_states[$i][0] = False
+		EndIf
+
+		If $status_text = "Default Communications Device" Then
+			$item_states[$i][1] = True
+			$found_comm = True
+		Else
+			$item_states[$i][1] = False
+		EndIf
 	Next
 
+	If Not $found_comm Then
+		$item_states[$found_def][1] = True
+	EndIf
 	Return $item_states
+
 EndFunc   ;==>ItemStates
 
-
-Func IsDef($item)
-	If GetOS() = "Vista" Then
-		ControlListView($title, $text, $ctrl, "Select", $item)
-		$EnCheck = ControlCommand("Sound", "Playback", "Button2", "IsEnabled")
-		If $EnCheck Then
-			Dim $results[2] = [False, False]
-		Else
-			Dim $results[2] = [True, True]
-		EndIf
-	ElseIf GetOS() = "7" Then
-		ControlListView($title, $text, $ctrl, "Select", $item)
-		$EnCheck = ControlCommand("Sound", "Playback", "Button2", "IsEnabled")
-		If Not $EnCheck Then
-
-			Dim $results[2] = [True, True]
-			return $results
-		EndIf
-
-		ControlClick($title, $text, "Button2", "primary", 1, 83, 10)
-		$hWND = WinGetHandle($ContextClass)
-		WinMove($hWND, "", 0, 0, 250, 250, 1)
-		$start_x = 20
-		$start_y = 10
-		$coords = GenCoords($start_x, $start_y)
-
-		$zeroColor = PixelChecksum($coords[0], $coords[1], $coords[2], $coords[3], 1, $hWND)
-
-		$start_x = 10
-		$start_y = 14
-		$coords = GenCoords($start_x, $start_y)
-
-		$devColor = PixelChecksum($coords[0], $coords[1], $coords[2], $coords[3], 1, $hWND)
-
-		$start_x = 10
-		$start_y = 34
-		$coords = GenCoords($start_x, $start_y)
-
-		$commColor = PixelChecksum($coords[0], $coords[1], $coords[2], $coords[3], 1, $hWND)
-
-		ControlSend($hWND, "", "", "{ESC}")
-
-		Dim $results[2]
-
-		If $devColor = $zeroColor Then
-			$results[0] = False
-		Else
-			$results[0] = True
-		EndIf
-
-		If $commColor = $zeroColor Then
-			$results[1] = False
-		Else
-			$results[1] = True
-		EndIf
-	EndIf
-	Return $results
-EndFunc   ;==>IsDef
 
 Func ShowingDisconnected()
 	; Returns -1 if there are no disconnected devices in system
