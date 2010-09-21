@@ -19,6 +19,8 @@ If @error Then
 	Terminate()
 EndIf
 
+Global $global_os = ""
+GetOS()
 Global $title = "Sound"
 Global $text = "Playback"
 Global $ctrl = "SysListView321"
@@ -293,6 +295,8 @@ EndFunc   ;==>ToggleDisabledMenuItem
 
 #Region Info functions
 Func GetOS()
+	If $global_os Then Return $global_os
+
 	$a = Regread("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion","ProductName")
 	$OS = "XP"
 
@@ -301,6 +305,7 @@ Func GetOS()
 	ElseIf StringInStr($a, "Windows Vista") Then
 		$OS = "Vista"
 	EndIF
+	$global_os = $OS
 	Return $OS
 EndFunc
 
