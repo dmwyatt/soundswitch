@@ -21,6 +21,7 @@ EndIf
 
 Global $global_os = ""
 GetOS()
+Dim Global $global_soundstate[
 Global $title = "Sound"
 Global $text = "Playback"
 Global $ctrl = "SysListView321"
