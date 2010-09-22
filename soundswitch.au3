@@ -19,9 +19,9 @@ If @error Then
 	Terminate()
 EndIf
 
+Global $global_soundstate[1][1]
 Global $global_os = ""
 GetOS()
-Dim Global $global_soundstate[
 Global $title = "Sound"
 Global $text = "Playback"
 Global $ctrl = "SysListView321"
@@ -312,20 +312,35 @@ EndFunc
 
 
 Func ItemStates()
+	If Not WinExists($title, $text) Then
+		OpenSound()
+		$close_Sound = True
+	Else
+		$close_Sound = False
+	EndIf
 	$item_count = ControlListView($title, $text, $ctrl, "GetItemCount")
-	Dim $item_states[$item_count][2]
+	Dim $item_states[$item_count][6]
 
 	$found_comm = False
 	For $i = 0 To $item_count - 1
-		$status_text = ControlListView($title, $text, $ctrl, "GetText", $i, 2)
-		If $status_text = "Default Device" Then
+		$device_type = ControlListView($title, $text, $ctrl, "GetText", $i, 0)
+		$device_name = ControlListView($title, $text, $ctrl, "GetText", $i, 1)
+		$device_status = ControlListView($title, $text, $ctrl, "GetText", $i, 2)
+		$device_matcher = $device_type & " " & $device_name
+
+		$item_states[$i][2] = $device_type
+		$item_states[$i][3] = $device_name
+		$item_states[$i][4] = $device_status
+		$item_states[$i][5] = $device_matcher
+
+		If $device_status = "Default Device" Then
 			$item_states[$i][0] = True
 			$found_def = $i
 		Else
 			$item_states[$i][0] = False
 		EndIf
 
-		If $status_text = "Default Communications Device" Then
+		If $device_status = "Default Communications Device" Then
 			$item_states[$i][1] = True
 			$found_comm = True
 		Else
@@ -336,7 +351,11 @@ Func ItemStates()
 	If Not $found_comm Then
 		$item_states[$found_def][1] = True
 	EndIf
-	Return $item_states
+	If $close_Sound Then
+		CloseSound()
+	EndIf
+;~ 	_ArrayDisplay($item_states)
+	$global_soundstate = $item_states
 
 EndFunc   ;==>ItemStates
 
