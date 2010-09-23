@@ -402,41 +402,4 @@ EndFunc   ;==>out
 Func Terminate()
 	Exit
 EndFunc   ;==>Terminate
-
-Func MouseMoveRect($x1, $y1, $x2, $y2)
-	$posx = MouseGetPos(0)
-	$posy = MouseGetPos(1)
-	MouseMove($x1, $y1)
-	MouseMove($x2, $y2)
-	Sleep(1000)
-	MouseMove($posx, $posy)
-EndFunc   ;==>MouseMoveRect
-
-Func PercentDiff($color1, $color2)
-	Return ($color1 / $color2) - 1
-EndFunc   ;==>PercentDiff
-
-Func GenCoords($start_x, $start_y)
-	$left = $start_x
-	$top = $start_y
-	$right = $left + $sample_width
-	$bottom = $top + $sample_height
-	Dim $coords[4] = [$left, $top, $right, $bottom]
-	Return $coords
-EndFunc   ;==>GenCoords
-
-Func AvgColor($left, $top, $right, $bottom, $hWND)
-	$pixel_count = 0
-	$color_total = 0
-	For $x = $left To $right
-		For $y = $top To $bottom
-			$color = PixelGetColor($x, $y, $hWND)
-			$pixel_color = _ColorGetBlue($color) + _ColorGetGreen($color) + _ColorGetRed($color)
-			$color_total += $pixel_color
-			$pixel_count += 1
-		Next
-	Next
-	$avg_color = $color_total / $pixel_count
-	Return $avg_color
-EndFunc   ;==>AvgColor
 #EndRegion Helper functions
