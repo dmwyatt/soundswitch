@@ -19,7 +19,6 @@ If @error Then
 	Terminate()
 EndIf
 
-Global $global_soundstate[1][1]
 Global $global_os = ""
 GetOS()
 Global $title = "Sound"
@@ -187,7 +186,7 @@ Func Scroller($states, $scrolling)
 EndFunc   ;==>Scroller
 
 Func Switcher($states, $switching)
-	;$scrolling:	0 - Default
+	;$switching:	0 - Default
 	;				1 - CommDevice
 	;				2 - Device
 	$curr = "notfound"
@@ -259,9 +258,8 @@ EndFunc   ;==>SetAsDefault
 Func SetAsDefaultComm($item)
 	ControlListView($title, $text, $ctrl, "Select", $item)
 	If GetOS() = "7" Then
-		ControlClick($title, $text, "Button2", "primary", 1, 89, 22)
-		$hWND = WinGetHandle($ContextClass)
-		ControlSend($hWND, "", "", "c")
+		ControlClick($title, $text, $ctrl, "secondary")
+		ControlSend($title, $text, $ctrl, "c")
 	ElseIf GetOS() = "Vista" Then
 		SetAsDefault($item)
 	EndIf
@@ -271,9 +269,8 @@ EndFunc   ;==>SetAsDefaultComm
 Func SetAsDefaultDevice($item)
 	ControlListView($title, $text, $ctrl, "Select", $item)
 	If GetOS() = "7" Then
-		ControlClick($title, $text, "Button2", "primary", 1, 89, 22)
-		$hWND = WinGetHandle($ContextClass)
-		ControlSend($hWND, "", "", "d")
+		ControlClick($title, $text, $ctrl, "secondary")
+		ControlSend($title, $text, $ctrl, "c")
 	ElseIf GetOS() = "Vista" Then
 		SetAsDefault($item)
 	EndIf
@@ -353,7 +350,7 @@ Func ItemStates()
 		CloseSound()
 	EndIf
 	_ArrayDisplay($item_states)
-	$global_soundstate = $item_states
+	return $item_states
 
 EndFunc   ;==>ItemStates
 
