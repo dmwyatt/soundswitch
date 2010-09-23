@@ -25,8 +25,8 @@ Global $title = "Sound"
 Global $text = "Playback"
 Global $ctrl = "SysListView321"
 Global $ContextClass = StringFormat("[CLASS:#%s]", 32768)
-Global $Source1 = Int(IniRead("sound_switch.ini", "Sound Devices", "Source1", "error")) - 1
-Global $Source2 = Int(IniRead("sound_switch.ini", "Sound Devices", "Source2", "error")) - 1
+Global $Source1 = IniRead("sound_switch.ini", "Sound Devices", "Source1", "error")
+Global $Source2 = IniRead("sound_switch.ini", "Sound Devices", "Source2", "error")
 Global $Set1 = IniRead("sound_switch.ini", "Speakers", "Set1", "error")
 Global $Set2 = IniRead("sound_switch.ini", "Speakers", "Set2", "error")
 Global $icon_hide = Int(IniRead("sound_switch.ini", "Options", "HideIcon", 0))
@@ -82,7 +82,7 @@ EndFunc   ;==>SwitchSpeakerCount
 Func SwitchDefault()
 	OpenSound()
 	$states = ItemStates()
-	Switcher($states, 0)
+
 	CloseSound()
 EndFunc   ;==>SwitchDefault
 
@@ -314,7 +314,7 @@ Func ItemStates()
 		$close_Sound = False
 	EndIf
 	$item_count = ControlListView($title, $text, $ctrl, "GetItemCount")
-	Dim $item_states[$item_count][6]
+	Dim $item_states[$item_count][7]
 
 	$found_comm = False
 	For $i = 0 To $item_count - 1
@@ -327,6 +327,14 @@ Func ItemStates()
 		$item_states[$i][3] = $device_name
 		$item_states[$i][4] = $device_status
 		$item_states[$i][5] = $device_matcher
+
+		If StringInStr($device_matcher, $Source1) Then
+			$item_states[$i][6] = "Source1"
+		EndIf
+
+		If StringInStr($device_matcher, $Source2) Then
+			$item_states[$i][6] = "Source2"
+		EndIf
 
 		If $device_status = "Default Device" Then
 			$item_states[$i][0] = True
@@ -349,11 +357,10 @@ Func ItemStates()
 	If $close_Sound Then
 		CloseSound()
 	EndIf
-	_ArrayDisplay($item_states)
+;~ 	_ArrayDisplay($item_states)
 	return $item_states
 
 EndFunc   ;==>ItemStates
-
 
 Func ShowingDisconnected()
 	; Returns -1 if there are no disconnected devices in system
