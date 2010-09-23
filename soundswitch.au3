@@ -4,7 +4,7 @@
 	Author:         Dustin Wyatt
 
 #ce ----------------------------------------------------------------------------
-
+AutoItSetOption("TrayIconDebug", 1)
 #include <Color.au3>
 #include <Array.au3>
 
@@ -82,7 +82,26 @@ EndFunc   ;==>SwitchSpeakerCount
 Func SwitchDefault()
 	OpenSound()
 	$states = ItemStates()
+	$source_indexes = SourceIndexes($states)
+	$curr_def = GetDefault($states)
 
+	Select
+		Case $curr_def = -1
+			;If no current default device then just use Source1
+			SetAsDefault($source_indexes[0])
+
+		Case ($curr_def <> $source_indexes[0]) And ($curr_def <> $source_indexes[1])
+			;If current default device not Source1 or Source2 we'll just use Source1
+			SetAsDefault($source_indexes[0])
+
+		Case $curr_def = $source_indexes[0]
+			;If current default device is Source1 make it Source2...
+			SetAsDefault($source_indexes[1])
+
+		Case $curr_def = $source_indexes[1]
+			;...or vice-versa
+			SetAsDefault($source_indexes[0])
+	EndSelect
 	CloseSound()
 EndFunc   ;==>SwitchDefault
 
@@ -124,6 +143,7 @@ EndFunc   ;==>ScrollComm
 Func OpenSound()
 	Run("control.exe /name Microsoft.AudioDevicesAndSoundThemes")
 	WinWait($title, $text)
+	WinMove($title, $text, -500, -500)
 EndFunc   ;==>OpenSound
 
 Func CloseSound()
@@ -361,6 +381,25 @@ Func ItemStates()
 	return $item_states
 
 EndFunc   ;==>ItemStates
+
+Func SourceIndexes($items)
+	Dim $indexes[2]
+	For $i = 0 to UBound($items)-1
+		If $items[$i][6] = "Source1" Then
+			$indexes[0] = $i
+		ElseIf $items[$i][6] = "Source2" Then
+			$indexes[1] = $i
+		EndIf
+	Next
+	Return $indexes
+EndFunc
+
+Func GetDefault($items)
+	For $i = 0 to UBound($items)-1
+		If $items[$i][0] And $items[$i][1] Then Return $i
+	Next
+	Return -1
+EndFunc
 
 Func ShowingDisconnected()
 	; Returns -1 if there are no disconnected devices in system
