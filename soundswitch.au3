@@ -31,8 +31,7 @@ Global $Source2 = Int(IniRead("sound_switch.ini", "Sound Devices", "Source2", "e
 Global $Set1 = IniRead("sound_switch.ini", "Speakers", "Set1", "error")
 Global $Set2 = IniRead("sound_switch.ini", "Speakers", "Set2", "error")
 Global $icon_hide = Int(IniRead("sound_switch.ini", "Options", "HideIcon", 0))
-Global $sample_width = 4 - 1
-Global $sample_height = 4 - 1
+
 
 For $key = 1 To $hotkeys[0][0]
 	$msg = StringFormat("Setting %s to %s", $hotkeys[$key][1], $hotkeys[$key][0])
@@ -305,11 +304,10 @@ Func GetOS()
 		$OS = "7"
 	ElseIf StringInStr($a, "Windows Vista") Then
 		$OS = "Vista"
-	EndIF
+	EndIf
 	$global_os = $OS
 	Return $OS
 EndFunc
-
 
 Func ItemStates()
 	If Not WinExists($title, $text) Then
@@ -354,7 +352,7 @@ Func ItemStates()
 	If $close_Sound Then
 		CloseSound()
 	EndIf
-;~ 	_ArrayDisplay($item_states)
+	_ArrayDisplay($item_states)
 	$global_soundstate = $item_states
 
 EndFunc   ;==>ItemStates
