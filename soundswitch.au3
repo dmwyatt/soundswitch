@@ -326,7 +326,6 @@ EndFunc   ;==>SetAsDefault
 
 Func SetAsDefaultComm($item)
 	If IsReady($item) Then
-		MsgBox(0, "selecting...", $item)
 		ControlListView($title, $text, $ctrl, "Select", $item)
 		If GetOS() = "7" Then
 			ControlSend($title, $text, "Button2", "{DOWN}c")
