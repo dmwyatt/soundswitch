@@ -135,7 +135,31 @@ EndFunc   ;==>SwitchDevice
 Func SwitchComm()
 	OpenSound()
 	$states = ItemStates()
-	Switcher($states, 1)
+	$source_indexes = SourceIndexes($states)
+	$curr_def = GetDefaultCommDevice($states)
+;~ 	MsgBox(0, "curr def", $curr_def)
+;~ 	_ArrayDisplay($source_indexes)
+;~ 	_ArrayDisplay($states)
+
+	Select
+		Case $curr_def = -1
+;~ 			;If no current default device then use first Ready device
+			;THIS SHOULDNT HAPPEN
+			SetAsDefaultComm(GetReady($states))
+
+		Case ($curr_def <> $source_indexes[0]) And ($curr_def <> $source_indexes[1])
+			;If current default device isn't either of our Sources, just use Source1
+			SetAsDefaultComm($source_indexes[0])
+
+		Case $curr_def = $source_indexes[0]
+			;If current default is Source1 make it Source2...
+			SetAsDefaultComm($source_indexes[1])
+
+		Case $curr_def = $source_indexes[1]
+			;...or vice-versa
+			SetAsDefaultComm($source_indexes[0])
+	EndSelect
+
 	CloseSound()
 EndFunc   ;==>SwitchComm
 
@@ -163,10 +187,11 @@ EndFunc   ;==>ScrollComm
 Func OpenSound()
 	Run("control.exe /name Microsoft.AudioDevicesAndSoundThemes")
 	WinWait($title, $text)
-	WinMove($title, $text, -500, -500)
+;~ 	WinMove($title, $text, -500, -500)
 EndFunc   ;==>OpenSound
 
 Func CloseSound()
+	return
 	If WinExists($title, $text) Then
 		ControlSend($title, $text, "", "{ESC}")
 	EndIf
@@ -291,28 +316,40 @@ Func Switcher($states, $switching)
 EndFunc   ;==>Switcher
 
 Func SetAsDefault($item)
-	ControlListView($title, $text, $ctrl, "Select", $item)
-	ControlClick($title, $text, "Button2", "primary")
+	If IsReady($item) Then
+		ControlListView($title, $text, $ctrl, "Select", $item)
+		ControlClick($title, $text, "Button2", "primary")
+	Else
+		MsgBox(0, "Soundswitch", "Device not in 'Ready' state")
+	EndIf
 EndFunc   ;==>SetAsDefault
 
 Func SetAsDefaultComm($item)
-	ControlListView($title, $text, $ctrl, "Select", $item)
-	If GetOS() = "7" Then
-		ControlClick($title, $text, $ctrl, "secondary")
-		ControlSend($title, $text, $ctrl, "c")
-	ElseIf GetOS() = "Vista" Then
-		SetAsDefault($item)
+	If IsReady($item) Then
+		MsgBox(0, "selecting...", $item)
+		ControlListView($title, $text, $ctrl, "Select", $item)
+		If GetOS() = "7" Then
+			ControlSend($title, $text, "Button2", "{DOWN}c")
+;~ 			ControlClick($title, $text, $ctrl, "secondary")
+;~ 			ControlSend($title, $text, $ctrl, "c")
+		ElseIf GetOS() = "Vista" Then
+			SetAsDefault($item)
+		EndIf
+	Else
+		MsgBox(0, "Soundswitch", "Device not in 'Ready' state")
 	EndIf
-	Return
 EndFunc   ;==>SetAsDefaultComm
 
 Func SetAsDefaultDevice($item)
-	ControlListView($title, $text, $ctrl, "Select", $item)
-	If GetOS() = "7" Then
-		ControlClick($title, $text, $ctrl, "secondary")
-		ControlSend($title, $text, $ctrl, "d")
-	ElseIf GetOS() = "Vista" Then
-		SetAsDefault($item)
+	If IsReady($item) Then
+		ControlListView($title, $text, $ctrl, "Select", $item)
+		If GetOS() = "7" Then
+			ControlSend($title, $text, "Button2", "{DOWN}d")
+		ElseIf GetOS() = "Vista" Then
+			SetAsDefault($item)
+		EndIf
+	Else
+		MsgBox(0, "Soundswitch", "Device not in 'Ready' state")
 	EndIf
 EndFunc   ;==>SetAsDefaultDevice
 
@@ -331,6 +368,14 @@ EndFunc   ;==>ToggleDisabledMenuItem
 #EndRegion Action Functions
 
 #Region Info functions
+Func GetReady($items)
+	;~ Pick first device with Ready status from $items
+	For $i = 0 to UBound($items)-1
+		If $items[$i][4] = "Ready" Then Return $i
+	Next
+	Return -1
+EndFunc
+
 Func GetOS()
 	If $global_os Then Return $global_os
 
@@ -346,12 +391,11 @@ Func GetOS()
 	Return $OS
 EndFunc
 
-Func GetReady($items)
-;~ 	Pick first device with Ready status from $items
-	For $i = 0 to UBound($items)-1
-		If $items[$i][4] = "Ready" Then Return $i
-	Next
-	Return -1
+Func IsReady($item, $states=False)
+	If Not $states Then $states = ItemStates()
+	If $states[$item][4] = "Ready" Then Return True
+	If StringInStr($states[$item][4], "Default") Then Return True
+	Return False
 EndFunc
 
 Func ItemStates()
