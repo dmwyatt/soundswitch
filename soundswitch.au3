@@ -87,15 +87,15 @@ Func SwitchDefault()
 
 	Select
 		Case $curr_def = -1
-			;If no current default device then just use Source1
+			;If no current default then just use Source1
 			SetAsDefault($source_indexes[0])
 
 		Case ($curr_def <> $source_indexes[0]) And ($curr_def <> $source_indexes[1])
-			;If current default device not Source1 or Source2 we'll just use Source1
+			;If current default not Source1 or Source2 we'll just use Source1
 			SetAsDefault($source_indexes[0])
 
 		Case $curr_def = $source_indexes[0]
-			;If current default device is Source1 make it Source2...
+			;If current default is Source1 make it Source2...
 			SetAsDefault($source_indexes[1])
 
 		Case $curr_def = $source_indexes[1]
@@ -108,7 +108,27 @@ EndFunc   ;==>SwitchDefault
 Func SwitchDevice()
 	OpenSound()
 	$states = ItemStates()
-	Switcher($states, 2)
+	$source_indexes = SourceIndexes($states)
+	$curr_def = GetDefaultDevice($states)
+
+	Select
+		Case $curr_def = -1
+;~ 			;If no current default device then use first Ready device
+			;THIS SHOULDNT HAPPEN
+			SetAsDefaultDevice(GetReady($states))
+
+		Case ($curr_def <> $source_indexes[0]) And ($curr_def <> $source_indexes[1])
+			;If current default device isn't either of our Sources, just use Source1
+			SetAsDefaultDevice($source_indexes[0])
+
+		Case $curr_def = $source_indexes[0]
+			;If current default is Source1 make it Source2...
+			SetAsDefaultDevice($source_indexes[1])
+
+		Case $curr_def = $source_indexes[1]
+			;...or vice-versa
+			SetAsDefaultDevice($source_indexes[0])
+	EndSelect
 	CloseSound()
 EndFunc   ;==>SwitchDevice
 
@@ -290,7 +310,7 @@ Func SetAsDefaultDevice($item)
 	ControlListView($title, $text, $ctrl, "Select", $item)
 	If GetOS() = "7" Then
 		ControlClick($title, $text, $ctrl, "secondary")
-		ControlSend($title, $text, $ctrl, "c")
+		ControlSend($title, $text, $ctrl, "d")
 	ElseIf GetOS() = "Vista" Then
 		SetAsDefault($item)
 	EndIf
@@ -324,6 +344,14 @@ Func GetOS()
 	EndIf
 	$global_os = $OS
 	Return $OS
+EndFunc
+
+Func GetReady($items)
+;~ 	Pick first device with Ready status from $items
+	For $i = 0 to UBound($items)-1
+		If $items[$i][4] = "Ready" Then Return $i
+	Next
+	Return -1
 EndFunc
 
 Func ItemStates()
@@ -397,6 +425,20 @@ EndFunc
 Func GetDefault($items)
 	For $i = 0 to UBound($items)-1
 		If $items[$i][0] And $items[$i][1] Then Return $i
+	Next
+	Return -1
+EndFunc
+
+Func GetDefaultDevice($items)
+	For $i = 0 to UBound($items)-1
+		If $items[$i][0] Then Return $i
+	Next
+	Return -1
+EndFunc
+
+Func GetDefaultCommDevice($items)
+	For $i = 0 to UBound($items)-1
+		If $items[$i][1] Then Return $i
 	Next
 	Return -1
 EndFunc
