@@ -166,21 +166,78 @@ EndFunc   ;==>SwitchComm
 Func ScrollDefault()
 	OpenSound()
 	$states = ItemStates()
-	Scroller($states, 0)
+	;Find current default
+	For $i = 0 To UBound($states) - 1
+		If $states[$i][4] = "Default Device" Then
+			$curr_def = $i
+			ExitLoop
+		EndIf
+	Next
+
+	$next = $curr_def
+	For $i = 0 To UBound($states) - 1
+		$next = Scroll($next, UBound($states) - 1)
+		If IsReady($next, $states) Then
+			SetAsDefault($next)
+			Return
+		EndIf
+	Next
+
 	CloseSound()
 EndFunc   ;==>ScrollDefault
 
 Func ScrollDevice()
 	OpenSound()
 	$states = ItemStates()
-	Scroller($states, 2)
+	;Find current default
+	For $i = 0 To UBound($states) - 1
+		If $states[$i][4] = "Default Device" Then
+			$curr_def = $i
+			ExitLoop
+		EndIf
+	Next
+
+	$next = $curr_def
+	For $i = 0 To UBound($states) - 1
+		$next = Scroll($next, UBound($states) - 1)
+		If IsReady($next, $states) Then
+			SetAsDefaultDevice($next)
+			Return
+		EndIf
+	Next
+
 	CloseSound()
 EndFunc   ;==>ScrollDevice
 
 Func ScrollComm()
 	OpenSound()
 	$states = ItemStates()
-	Scroller($states, 1)
+	;Find current default
+	$curr_def = False
+	For $i = 0 To UBound($states) - 1
+		If $states[$i][4] = "Default Communications Device" Then
+			$curr_def = $i
+			ExitLoop
+		EndIf
+	Next
+	If Not $curr_def Then
+		For $i = 0 To UBound($states) - 1
+			If $states[$i][4] = "Default Device" Then
+				$curr_def = $i
+				ExitLoop
+			EndIf
+		Next
+	EndIf
+
+	$next = $curr_def
+	For $i = 0 To UBound($states) - 1
+		$next = Scroll($next, UBound($states) - 1)
+		If IsReady($next, $states) Then
+			SetAsDefaultComm($next)
+			Return
+		EndIf
+	Next
+
 	CloseSound()
 EndFunc   ;==>ScrollComm
 
@@ -289,6 +346,14 @@ EndFunc   ;==>SetAsDefaultDevice
 #endregion Action Functions
 
 #region Info functions
+Func Scroll($curr, $limit)
+	$curr += 1
+	if $curr > $limit Then
+		$curr = 0
+	EndIf
+	Return $curr
+EndFunc
+
 Func GetReady($items)
 ;~ Pick first device with Ready status from $items
 	For $i = 0 To UBound($items) - 1
