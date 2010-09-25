@@ -4,9 +4,11 @@
 	Author:         Dustin Wyatt
 
 #ce ----------------------------------------------------------------------------
-AutoItSetOption("TrayIconDebug", 1)
+;~ AutoItSetOption("TrayIconDebug", 1)
 #include <Color.au3>
 #include <Array.au3>
+#include <Constants.au3>
+
 
 ;~ --------------------------------------------------------------------------------------------------------
 ;~ Initialization
@@ -30,7 +32,7 @@ Global $Source2 = IniRead("sound_switch.ini", "Sound Devices", "Source2", "error
 Global $Set1 = IniRead("sound_switch.ini", "Speakers", "Set1", "error")
 Global $Set2 = IniRead("sound_switch.ini", "Speakers", "Set2", "error")
 Global $icon_hide = Int(IniRead("sound_switch.ini", "Options", "HideIcon", 0))
-
+Global $tray_click = Int(IniRead("sound_switch.ini", "Options", "TrayClickMode", 1))
 
 For $key = 1 To $hotkeys[0][0]
 	$msg = StringFormat("Setting %s to %s", $hotkeys[$key][1], $hotkeys[$key][0])
@@ -44,6 +46,15 @@ Next
 
 If $icon_hide Then
 	Opt("TrayIconHide", $icon_hide)
+Else
+	Opt("TrayMenuMode",1)
+EndIf
+
+If $tray_click Then
+	Opt("TrayOnEventMode",1)
+	Opt("TrayIconHide", 0)
+	TraySetOnEvent($TRAY_EVENT_PRIMARYDOWN, "SetDefaultSource1")
+	TraySetOnEvent($TRAY_EVENT_SECONDARYDOWN, "SetDefaultSource2")
 EndIf
 
 While 1
@@ -244,73 +255,21 @@ EndFunc   ;==>ScrollComm
 Func OpenSound()
 	Run("control.exe /name Microsoft.AudioDevicesAndSoundThemes")
 	WinWait($title, $text)
-;~ 	WinMove($title, $text, -500, -500)
+	WinMove($title, $text, -500, -500)
 EndFunc   ;==>OpenSound
 
 Func CloseSound()
-	Return
 	If WinExists($title, $text) Then
 		ControlSend($title, $text, "", "{ESC}")
 	EndIf
 EndFunc   ;==>CloseSound
 
-Func Scroller($states, $scrolling)
-	;$scrolling:	0 - Default
-	;				1 - CommDevice
-	;				2 - Device
-	$curr = "notfound"
-	Select
-		Case $scrolling == 0
-			For $item = 0 To UBound($states) - 1
-				If $states[$item][0] And $states[$item][1] Then
-					$curr = $item
-					ExitLoop
-				EndIf
-			Next
-			If $curr == "notfound" Then $curr = 0
-		Case $scrolling == 1
-			For $item = 0 To UBound($states) - 1
-				If $states[$item][1] Then
-					$curr = $item
-					ExitLoop
-				EndIf
-			Next
-		Case $scrolling == 2
-			For $item = 0 To UBound($states) - 1
-				If $states[$item][0] Then
-					$curr = $item
-					ExitLoop
-				EndIf
-			Next
-		Case Else
-			Return -1
-	EndSelect
-
-	If $curr == "notfound" Then Return -1
-
-	If $curr == UBound($states) - 1 Then
-		$next = 0
-	Else
-		$next = $curr + 1
-	EndIf
-
-	Select
-		Case $scrolling == 0
-			SetAsDefault($next)
-		Case $scrolling == 1
-			SetAsDefaultComm($next)
-		Case $scrolling == 2
-			SetAsDefaultDevice($next)
-		Case Else
-			Return -1
-	EndSelect
-	Return 0
-EndFunc   ;==>Scroller
-
 Func SetAsDefault($item)
 	If IsReady($item) Then
 		ControlListView($title, $text, $ctrl, "Select", $item)
 		ControlClick($title, $text, "Button2", "primary")
+		$states = ItemStates()
+		TraySetToolTip($states[$item][5])
 	Else
 		MsgBox(0, "Soundswitch", "Device not in 'Ready' state")
 	EndIf
@@ -472,6 +431,22 @@ Func GetDefaultCommDevice($items)
 	Next
 	Return -1
 EndFunc   ;==>GetDefaultCommDevice
+
+Func SetDefaultSource1()
+	OpenSound()
+	$states = ItemStates()
+	$source_indexes = SourceIndexes($states)
+	SetAsDefault($source_indexes[0])
+	CloseSound()
+EndFunc
+
+Func SetDefaultSource2()
+	OpenSound()
+	$states = ItemStates()
+	$source_indexes = SourceIndexes($states)
+	SetAsDefault($source_indexes[1])
+	CloseSound()
+EndFunc
 #endregion Info functions
 
 #region Helper functions
