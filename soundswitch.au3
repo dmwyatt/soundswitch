@@ -1,8 +1,8 @@
 #cs ----------------------------------------------------------------------------
-
+	
 	AutoIt Version: 3.3.0.0
 	Author:         Dustin Wyatt
-
+	
 #ce ----------------------------------------------------------------------------
 AutoItSetOption("TrayIconDebug", 1)
 #include <Color.au3>
@@ -50,7 +50,7 @@ While 1
 	Sleep(10)
 WEnd
 
-#Region Action Functions
+#region Action Functions
 Func SwitchSpeakerCount()
 	OpenSound()
 	$states = ItemStates()
@@ -191,7 +191,7 @@ Func OpenSound()
 EndFunc   ;==>OpenSound
 
 Func CloseSound()
-	return
+	Return
 	If WinExists($title, $text) Then
 		ControlSend($title, $text, "", "{ESC}")
 	EndIf
@@ -364,21 +364,21 @@ Func ToggleDisabledMenuItem()
 	ControlSend($hWND, "", "", "{DOWN}{ENTER}")
 EndFunc   ;==>ToggleDisabledMenuItem
 
-#EndRegion Action Functions
+#endregion Action Functions
 
-#Region Info functions
+#region Info functions
 Func GetReady($items)
-	;~ Pick first device with Ready status from $items
-	For $i = 0 to UBound($items)-1
+;~ Pick first device with Ready status from $items
+	For $i = 0 To UBound($items) - 1
 		If $items[$i][4] = "Ready" Then Return $i
 	Next
 	Return -1
-EndFunc
+EndFunc   ;==>GetReady
 
 Func GetOS()
 	If $global_os Then Return $global_os
 
-	$a = Regread("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion","ProductName")
+	$a = RegRead("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "ProductName")
 	$OS = "XP"
 
 	If StringInStr($a, "Windows 7") Then
@@ -388,14 +388,14 @@ Func GetOS()
 	EndIf
 	$global_os = $OS
 	Return $OS
-EndFunc
+EndFunc   ;==>GetOS
 
-Func IsReady($item, $states=False)
+Func IsReady($item, $states = False)
 	If Not $states Then $states = ItemStates()
 	If $states[$item][4] = "Ready" Then Return True
 	If StringInStr($states[$item][4], "Default") Then Return True
 	Return False
-EndFunc
+EndFunc   ;==>IsReady
 
 Func ItemStates()
 	If Not WinExists($title, $text) Then
@@ -449,13 +449,13 @@ Func ItemStates()
 		CloseSound()
 	EndIf
 ;~ 	_ArrayDisplay($item_states)
-	return $item_states
+	Return $item_states
 
 EndFunc   ;==>ItemStates
 
 Func SourceIndexes($items)
 	Dim $indexes[2]
-	For $i = 0 to UBound($items)-1
+	For $i = 0 To UBound($items) - 1
 		If $items[$i][6] = "Source1" Then
 			$indexes[0] = $i
 		ElseIf $items[$i][6] = "Source2" Then
@@ -463,28 +463,28 @@ Func SourceIndexes($items)
 		EndIf
 	Next
 	Return $indexes
-EndFunc
+EndFunc   ;==>SourceIndexes
 
 Func GetDefault($items)
-	For $i = 0 to UBound($items)-1
+	For $i = 0 To UBound($items) - 1
 		If $items[$i][0] And $items[$i][1] Then Return $i
 	Next
 	Return -1
-EndFunc
+EndFunc   ;==>GetDefault
 
 Func GetDefaultDevice($items)
-	For $i = 0 to UBound($items)-1
+	For $i = 0 To UBound($items) - 1
 		If $items[$i][0] Then Return $i
 	Next
 	Return -1
-EndFunc
+EndFunc   ;==>GetDefaultDevice
 
 Func GetDefaultCommDevice($items)
-	For $i = 0 to UBound($items)-1
+	For $i = 0 To UBound($items) - 1
 		If $items[$i][1] Then Return $i
 	Next
 	Return -1
-EndFunc
+EndFunc   ;==>GetDefaultCommDevice
 
 Func ShowingDisconnected()
 	; Returns -1 if there are no disconnected devices in system
@@ -517,9 +517,9 @@ Func ShowingDisabled()
 	ToggleDisabledMenuItem()
 	Return $state
 EndFunc   ;==>ShowingDisabled
-#EndRegion Info functions
+#endregion Info functions
 
-#Region Helper functions
+#region Helper functions
 Func out($msg)
 	ConsoleWrite(String($msg))
 	ConsoleWrite(@LF)
@@ -528,4 +528,4 @@ EndFunc   ;==>out
 Func Terminate()
 	Exit
 EndFunc   ;==>Terminate
-#EndRegion Helper functions
+#endregion Helper functions
