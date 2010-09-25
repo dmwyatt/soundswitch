@@ -1,8 +1,8 @@
 #cs ----------------------------------------------------------------------------
-	
+
 	AutoIt Version: 3.3.0.0
 	Author:         Dustin Wyatt
-	
+
 #ce ----------------------------------------------------------------------------
 AutoItSetOption("TrayIconDebug", 1)
 #include <Color.au3>
@@ -250,71 +250,6 @@ Func Scroller($states, $scrolling)
 	Return 0
 EndFunc   ;==>Scroller
 
-Func Switcher($states, $switching)
-	;$switching:	0 - Default
-	;				1 - CommDevice
-	;				2 - Device
-	$curr = "notfound"
-	Select
-		Case $switching == 0
-			For $item = 0 To UBound($states) - 1
-				If $states[$item][0] And $states[$item][1] Then
-					$curr = $item
-					ExitLoop
-				EndIf
-			Next
-			If $curr == "notfound" Then $curr = 0
-		Case $switching == 1
-			For $item = 0 To UBound($states) - 1
-				If $states[$item][1] Then
-					$curr = $item
-					ExitLoop
-				EndIf
-			Next
-		Case $switching == 2
-			For $item = 0 To UBound($states) - 1
-				If $states[$item][0] Then
-					$curr = $item
-					ExitLoop
-				EndIf
-			Next
-		Case Else
-			Return -1
-	EndSelect
-
-	If $curr == "notfound" Then Return -1
-
-	Select
-		Case $switching == 0
-			If $curr == $Source1 Then
-				SetAsDefault($Source2)
-			ElseIf $curr == $Source2 Then
-				SetAsDefault($Source1)
-			Else
-				SetAsDefault($Source1)
-			EndIf
-		Case $switching == 1
-			If $curr == $Source1 Then
-				SetAsDefaultComm($Source2)
-			ElseIf $curr == $Source2 Then
-				SetAsDefaultComm($Source1)
-			Else
-				SetAsDefaultComm($Source1)
-			EndIf
-		Case $switching == 2
-			If $curr == $Source1 Then
-				SetAsDefaultDevice($Source2)
-			ElseIf $curr == $Source2 Then
-				SetAsDefaultDevice($Source1)
-			Else
-				SetAsDefaultDevice($Source1)
-			EndIf
-	EndSelect
-
-	Return 0
-
-EndFunc   ;==>Switcher
-
 Func SetAsDefault($item)
 	If IsReady($item) Then
 		ControlListView($title, $text, $ctrl, "Select", $item)
@@ -351,19 +286,6 @@ Func SetAsDefaultDevice($item)
 		MsgBox(0, "Soundswitch", "Device not in 'Ready' state")
 	EndIf
 EndFunc   ;==>SetAsDefaultDevice
-
-Func ToggleDiscMenuItem()
-	ControlClick($title, $text, $ctrl, "secondary", 1, 1, 1)
-	$hWND = WinGetHandle($ContextClass)
-	ControlSend($hWND, "", "", "{DOWN 2}{ENTER}")
-EndFunc   ;==>ToggleDiscMenuItem
-
-Func ToggleDisabledMenuItem()
-	ControlClick($title, $text, $ctrl, "secondary", 1, 1, 1)
-	$hWND = WinGetHandle($ContextClass)
-	ControlSend($hWND, "", "", "{DOWN}{ENTER}")
-EndFunc   ;==>ToggleDisabledMenuItem
-
 #endregion Action Functions
 
 #region Info functions
@@ -485,38 +407,6 @@ Func GetDefaultCommDevice($items)
 	Next
 	Return -1
 EndFunc   ;==>GetDefaultCommDevice
-
-Func ShowingDisconnected()
-	; Returns -1 if there are no disconnected devices in system
-	$orig_item_count = ControlListView($title, $text, $ctrl, "GetItemCount")
-	ToggleDiscMenuItem()
-	$curr_item_count = ControlListView($title, $text, $ctrl, "GetItemCount")
-	If $orig_item_count > $curr_item_count Then
-		$state = True
-	ElseIf $orig_item_count < $curr_item_count Then
-		$state = False
-	Else
-		$state = -1
-	EndIf
-	ToggleDiscMenuItem()
-	Return $state
-EndFunc   ;==>ShowingDisconnected
-
-Func ShowingDisabled()
-	; Returns -1 if there are no disabled devices in system
-	$orig_item_count = ControlListView($title, $text, $ctrl, "GetItemCount")
-	ToggleDisabledMenuItem()
-	$curr_item_count = ControlListView($title, $text, $ctrl, "GetItemCount")
-	If $orig_item_count > $curr_item_count Then
-		$state = True
-	ElseIf $orig_item_count < $curr_item_count Then
-		$state = False
-	Else
-		$state = -1
-	EndIf
-	ToggleDisabledMenuItem()
-	Return $state
-EndFunc   ;==>ShowingDisabled
 #endregion Info functions
 
 #region Helper functions
