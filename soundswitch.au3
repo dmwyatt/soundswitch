@@ -474,6 +474,11 @@ Func SetDefaultSource2()
 	SetAsDefault($source_indexes[1])
 	CloseSound()
 EndFunc
+
+Func DisplayDeviceInfo()
+	$states = ItemStates()
+	Notify($states)
+EndFunc
 #endregion Info functions
 
 #region Helper functions
