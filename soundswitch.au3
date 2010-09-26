@@ -190,6 +190,7 @@ Func ScrollDefault()
 		$next = Scroll($next, UBound($states) - 1)
 		If IsReady($next, $states) Then
 			SetAsDefault($next)
+			CloseSound()
 			Return
 		EndIf
 	Next
@@ -213,10 +214,10 @@ Func ScrollDevice()
 		$next = Scroll($next, UBound($states) - 1)
 		If IsReady($next, $states) Then
 			SetAsDefaultDevice($next)
+			CloseSound()
 			Return
 		EndIf
 	Next
-
 	CloseSound()
 EndFunc   ;==>ScrollDevice
 
@@ -245,10 +246,10 @@ Func ScrollComm()
 		$next = Scroll($next, UBound($states) - 1)
 		If IsReady($next, $states) Then
 			SetAsDefaultComm($next)
+			CloseSound()
 			Return
 		EndIf
 	Next
-
 	CloseSound()
 EndFunc   ;==>ScrollComm
 
@@ -264,15 +265,39 @@ Func CloseSound()
 	EndIf
 EndFunc   ;==>CloseSound
 
+Func InfoMessage($states)
+	$defdev = "not found"
+	$defcomm = "not found"
+	For $i = 0 to UBound($states)-1
+		If $states[$i][0] = True Then
+			$defdev = $states[$i][5]
+		EndIf
+		If $states[$i][1] = True Then
+			$defcomm = $states[$i][5]
+		EndIf
+	Next
+	Return "Default Device: " & $defdev & @CRLF & "Default Comm: " & $defcomm
+EndFunc
+
+Func TipTray($states)
+	$msg = InfoMessage($states)
+	TrayTip("Soundswitch", $msg, 5)
+EndFunc
+
+Func Notify($states)
+	TraySetToolTip(InfoMessage($states))
+	TipTray($states)
+EndFunc
+
 Func SetAsDefault($item)
 	If IsReady($item) Then
 		ControlListView($title, $text, $ctrl, "Select", $item)
 		ControlClick($title, $text, "Button2", "primary")
-		$states = ItemStates()
-		TraySetToolTip($states[$item][5])
 	Else
 		MsgBox(0, "Soundswitch", "Device not in 'Ready' state")
 	EndIf
+	$states = ItemStates()
+	Notify($states)
 EndFunc   ;==>SetAsDefault
 
 Func SetAsDefaultComm($item)
@@ -280,14 +305,14 @@ Func SetAsDefaultComm($item)
 		ControlListView($title, $text, $ctrl, "Select", $item)
 		If GetOS() = "7" Then
 			ControlSend($title, $text, "Button2", "{DOWN}c")
-;~ 			ControlClick($title, $text, $ctrl, "secondary")
-;~ 			ControlSend($title, $text, $ctrl, "c")
 		ElseIf GetOS() = "Vista" Then
 			SetAsDefault($item)
 		EndIf
 	Else
 		MsgBox(0, "Soundswitch", "Device not in 'Ready' state")
 	EndIf
+	$states = ItemStates()
+	Notify($states)
 EndFunc   ;==>SetAsDefaultComm
 
 Func SetAsDefaultDevice($item)
@@ -301,6 +326,8 @@ Func SetAsDefaultDevice($item)
 	Else
 		MsgBox(0, "Soundswitch", "Device not in 'Ready' state")
 	EndIf
+	$states = ItemStates()
+	Notify($states)
 EndFunc   ;==>SetAsDefaultDevice
 #endregion Action Functions
 
