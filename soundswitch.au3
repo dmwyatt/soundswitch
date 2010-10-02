@@ -1,3 +1,4 @@
+#NoTrayIcon
 #cs ----------------------------------------------------------------------------
 
 	AutoIt Version: 3.3.0.0
@@ -5,7 +6,6 @@
 
 #ce ----------------------------------------------------------------------------
 ;~ AutoItSetOption("TrayIconDebug", 1)
-#NoTrayIcon
 #include <Color.au3>
 #include <Array.au3>
 #include <Constants.au3>
