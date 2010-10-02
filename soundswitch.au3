@@ -5,6 +5,7 @@
 
 #ce ----------------------------------------------------------------------------
 ;~ AutoItSetOption("TrayIconDebug", 1)
+#NoTrayIcon
 #include <Color.au3>
 #include <Array.au3>
 #include <Constants.au3>
@@ -21,6 +22,10 @@ If @error Then
 	Terminate()
 EndIf
 
+Global $config_source1_tray = ""
+Global $config_source2_tray = ""
+Global $output_tray = ""
+Global $global_soundstate = ""
 Global $global_os = ""
 GetOS()
 Global $title = "Sound"
@@ -32,7 +37,7 @@ Global $Source2 = IniRead("sound_switch.ini", "Sound Devices", "Source2", "error
 Global $Set1 = IniRead("sound_switch.ini", "Speakers", "Set1", "error")
 Global $Set2 = IniRead("sound_switch.ini", "Speakers", "Set2", "error")
 Global $icon_hide = Int(IniRead("sound_switch.ini", "Options", "HideIcon", 0))
-Global $tray_click = Int(IniRead("sound_switch.ini", "Options", "TrayClickMode", 1))
+Global $display_tray_tip = Int(IniRead("sound_switch.ini", "Options", "DisplayTrayTip", 1))
 
 For $key = 1 To $hotkeys[0][0]
 	$msg = StringFormat("Setting %s to %s", $hotkeys[$key][1], $hotkeys[$key][0])
@@ -44,22 +49,118 @@ For $key = 1 To $hotkeys[0][0]
 	EndIf
 Next
 
-If $icon_hide Then
-	Opt("TrayIconHide", $icon_hide)
-Else
-	Opt("TrayMenuMode",1)
+If Not $icon_hide Then
+	Opt("TrayIconHide", 0)
+	Opt("TrayMenuMode",3)
 EndIf
 
-If $tray_click Then
-	Opt("TrayOnEventMode",1)
-	Opt("TrayIconHide", 0)
-	TraySetOnEvent($TRAY_EVENT_PRIMARYDOWN, "SetDefaultSource1")
-	TraySetOnEvent($TRAY_EVENT_SECONDARYDOWN, "SetDefaultSource2")
+
+Opt("TrayOnEventMode", 0)
+If Not $global_soundstate Then
+	ItemStates()
 EndIf
+
+TraySetClick(8)
+;Build source config menus
+Global $config_menu = TrayCreateMenu("Config Sources")
+Global $config_source1_menu = TrayCreateMenu("Source 1", $config_menu)
+Global $config_source2_menu = TrayCreateMenu("Source 2", $config_menu)
+
+;Build source selection menu
+Global $output_menu = TrayCreateMenu("Output")
+
+TrayCreateItem("")
+
+Menus()
+
+$refresh_item = TrayCreateItem("Refresh available devices")
+$exit_item = TrayCreateItem("Exit")
 
 While 1
-	Sleep(10)
+	$msg = TrayGetMsg()
+	If $msg = 0 Then ContinueLoop
+	If $msg = $TRAY_EVENT_PRIMARYDOWN Then SwitchDefault()
+	For $i = 0 to UBound($global_soundstate)-1
+		If $msg = $config_source1_tray[$i][0] Then
+			$Source1 = $config_source1_tray[$i][1]
+			IniWrite("sound_switch.ini", "Sound Devices", "Source1", $Source1)
+		ElseIf $msg = $config_source2_tray[$i][0] Then
+			$Source2 = $config_source2_tray[$i][1]
+			IniWrite("sound_switch.ini", "Sound Devices", "Source2", $Source2)
+		ElseIf $msg = $output_tray[$i][0] Then
+			$ret = SetAsDefault($i)
+			If $ret = -1 Then
+				Menus(False)
+			EndIf
+		EndIf
+	Next
+	If $msg = $refresh_item Then Menus()
+	If $msg = $exit_item Then Terminate()
 WEnd
+
+Func Menus($refetch_states = False)
+	; If $refetch_states is True then we reopen Sound applet and fetch states
+	DeleteSubMenus($refetch_states = False)
+	Dim $config_source1_tray[UBound($global_soundstate)][3]
+	Dim $config_source2_tray[UBound($global_soundstate)][3]
+	Dim $output_tray[UBound($global_soundstate)][3]
+
+
+ 	For $i = 0 To UBound($global_soundstate)-1
+		$config_source1_tray[$i][0] = TrayCreateItem($global_soundstate[$i][5], $config_source1_menu, -1, 1)
+		If $global_soundstate[$i][6] = "Source1" Then
+			TrayItemSetState(-1, $TRAY_CHECKED)
+			$config_source1_tray[$i][2] = True
+		Else
+			$config_source1_tray[$i][2] = False
+		EndIf
+		$config_source1_tray[$i][1] = $global_soundstate[$i][5]
+
+		$config_source2_tray[$i][0] = TrayCreateItem($global_soundstate[$i][5], $config_source2_menu, -1, 1)
+		If $global_soundstate[$i][6] = "Source2" Then
+			TrayItemSetState(-1, $TRAY_CHECKED)
+			$config_source2_tray[$i][2] = True
+		Else
+			$config_source2_tray[$i][2] = False
+		EndIf
+		$config_source2_tray[$i][1] = $global_soundstate[$i][5]
+
+		$output_tray[$i][0] = TrayCreateItem($global_soundstate[$i][5], $output_menu, -1, 1)
+		$curr_default = GetDefault($global_soundstate)
+		If $curr_default = $i Then
+			TrayItemSetState(-1, $TRAY_CHECKED)
+			$output_tray[$i][2] = True
+		Else
+			$output_tray[$i][2] = False
+		EndIf
+		$output_tray[$i][1] = $global_soundstate[$i][5]
+	Next
+EndFunc
+
+Func DeleteSubMenus($refetch_states = False)
+	; If $refetch_states is True then we reopen Sound applet and fetch states
+	If IsArray($config_source1_tray) Then
+		For $i = 0 to UBound($config_source1_tray)-1
+			TrayItemDelete($config_source1_tray[$i][0])
+		Next
+		If $refetch_states Then ItemStates()
+		$fetched_states = True
+	EndIf
+
+	If IsArray($config_source2_tray) Then
+		For $i = 0 to UBound($config_source2_tray)-1
+			TrayItemDelete($config_source2_tray[$i][0])
+		Next
+		If not $fetched_states Then ItemStates()
+	EndIf
+
+	If IsArray($output_tray) Then
+		For $i = 0 to UBound($output_tray)-1
+			TrayItemDelete($output_tray[$i][0])
+		Next
+		If not $fetched_states Then ItemStates()
+	EndIf
+EndFunc
 
 #region Action Functions
 Func SwitchSpeakerCount()
@@ -254,9 +355,14 @@ Func ScrollComm()
 EndFunc   ;==>ScrollComm
 
 Func OpenSound()
-	Run("control.exe /name Microsoft.AudioDevicesAndSoundThemes")
-	WinWait($title, $text)
-	WinMove($title, $text, -500, -500)
+	If Not WinExists($title, $text) Then
+		Run("control.exe /name Microsoft.AudioDevicesAndSoundThemes")
+		WinWait($title, $text)
+		WinMove($title, $text, -500, -500)
+		Return 0
+	Else
+		Return -1
+	EndIf
 EndFunc   ;==>OpenSound
 
 Func CloseSound()
@@ -281,23 +387,31 @@ EndFunc
 
 Func TipTray($states)
 	$msg = InfoMessage($states)
-	TrayTip("Soundswitch", $msg, 5)
+	TrayTip("Soundswitch", $msg, 1)
 EndFunc
 
 Func Notify($states)
 	TraySetToolTip(InfoMessage($states))
-	TipTray($states)
+	If $display_tray_tip Then TipTray($states)
 EndFunc
 
 Func SetAsDefault($item)
-	If IsReady($item) Then
+	$opened = OpenSound()
+	If IsReady($item, $global_soundstate) Then
 		ControlListView($title, $text, $ctrl, "Select", $item)
 		ControlClick($title, $text, "Button2", "primary")
+		Notify($global_soundstate)
 	Else
 		MsgBox(0, "Soundswitch", "Device not in 'Ready' state")
+		If $opened = 0 Then
+			CloseSound()
+		EndIf
+		Return -1
 	EndIf
-	$states = ItemStates()
-	Notify($states)
+	If $opened = 0 Then
+		CloseSound()
+	EndIf
+	Return 1
 EndFunc   ;==>SetAsDefault
 
 Func SetAsDefaultComm($item)
@@ -422,6 +536,7 @@ Func ItemStates()
 		CloseSound()
 	EndIf
 ;~ 	_ArrayDisplay($item_states)
+	$global_soundstate = $item_states
 	Return $item_states
 
 EndFunc   ;==>ItemStates
@@ -479,6 +594,8 @@ Func DisplayDeviceInfo()
 	$states = ItemStates()
 	Notify($states)
 EndFunc
+
+
 #endregion Info functions
 
 #region Helper functions
