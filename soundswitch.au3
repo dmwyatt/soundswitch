@@ -1,8 +1,13 @@
 #NoTrayIcon
+#Region ;**** Directives created by AutoIt3Wrapper_GUI ****
+#AutoIt3Wrapper_UseX64=n
+#EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 #cs ----------------------------------------------------------------------------
 
 	AutoIt Version: 3.3.0.0
 	Author:         Dustin Wyatt
+
+
 
 #ce ----------------------------------------------------------------------------
 ;~ AutoItSetOption("TrayIconDebug", 1)
