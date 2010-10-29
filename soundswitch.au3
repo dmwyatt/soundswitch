@@ -49,8 +49,8 @@ For $key = 1 To $hotkeys[0][0]
 	$err = HotKeySet($hotkeys[$key][1], $hotkeys[$key][0])
 	If $err == 0 Then
 		$errmsg_fmt = "Error setting %s to %s."
-		MsgBox(16, "SoundSwitch Error", StringFormat($errmsg_fmt, $hotkeys[$key][0], $hotkeys[$key][1]))
-		Terminate()
+;~ 		MsgBox(16, "SoundSwitch Error", StringFormat($errmsg_fmt, $hotkeys[$key][0], $hotkeys[$key][1]))
+		TrayTip("Soundswitch", StringFormat($errmsg_fmt, $hotkeys[$key][0], $hotkeys[$key][1]), True, 3)
 	EndIf
 Next
 
@@ -395,9 +395,9 @@ Func TipTray($states)
 	TrayTip("Soundswitch", $msg, 1)
 EndFunc
 
-Func Notify($states)
+Func Notify($states, $force_tip=False)
 	TraySetToolTip(InfoMessage($states))
-	If $display_tray_tip Then TipTray($states)
+	If $display_tray_tip Or $force_tip Then TipTray($states)
 EndFunc
 
 Func SetAsDefault($item)
@@ -597,7 +597,7 @@ EndFunc
 
 Func DisplayDeviceInfo()
 	$states = ItemStates()
-	Notify($states)
+	Notify($states, True)
 EndFunc
 
 
