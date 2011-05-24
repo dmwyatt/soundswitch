@@ -1,7 +1,4 @@
 #NoTrayIcon
-#Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_UseX64=n
-#EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 #cs ----------------------------------------------------------------------------
 
 	AutoIt Version: 3.3.0.0
@@ -490,6 +487,12 @@ Func IsReady($item, $states = False)
 EndFunc   ;==>IsReady
 
 Func ItemStates()
+	;--------------------------------------------------------------
+	;	Name: 			ItemStates
+	;	Description: 	Opens Sound applet and gets states of all devices
+	;	Returns:		Array where each row corresponds to a sound device and the columns are:
+	;					Default Comm, Default Dev, Name, Description, State, Name + Description, Source designation
+	;--------------------------------------------------------------
 	If Not WinExists($title, $text) Then
 		OpenSound()
 		$close_Sound = True
