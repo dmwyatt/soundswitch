@@ -1,8 +1,8 @@
 #NoTrayIcon
 #cs ----------------------------------------------------------------------------
 
-	AutoIt Version: 3.3.0.0
-	Author:         Dustin Wyatt
+	AutoIt Version: 3.4.0.0
+	Author: Dustin Wyatt 3.3.0.0, Michael Linck 3.4.0.0
 
 
 
@@ -30,9 +30,9 @@ Global $output_tray = ""
 Global $global_soundstate = ""
 Global $global_os = ""
 GetOS()
-Global $title = "Sound"
-Global $text = "Playback"
+
 Global $ctrl = "SysListView321"
+
 Global $ContextClass = StringFormat("[CLASS:#%s]", 32768)
 Global $Source1 = IniRead("sound_switch.ini", "Sound Devices", "Source1", "error")
 Global $Source2 = IniRead("sound_switch.ini", "Sound Devices", "Source2", "error")
@@ -40,6 +40,16 @@ Global $Set1 = IniRead("sound_switch.ini", "Speakers", "Set1", "error")
 Global $Set2 = IniRead("sound_switch.ini", "Speakers", "Set2", "error")
 Global $icon_hide = Int(IniRead("sound_switch.ini", "Options", "HideIcon", 0))
 Global $display_tray_tip = Int(IniRead("sound_switch.ini", "Options", "DisplayTrayTip", 1))
+
+Global $title = IniRead("sound_switch.ini", "Strings", "WindowsTitle", "error")
+Global $text = IniRead("sound_switch.ini", "Strings", "WindowsTab", "error")
+Global $default_dev = IniRead("sound_switch.ini", "Strings", "DefaultDevice", "error")
+Global $default_dev_alt = IniRead("sound_switch.ini", "Strings", "DefaultDeviceAltLetter", "error")
+Global $default_comm = IniRead("sound_switch.ini", "Strings", "DefaultCommDevice", "error")
+Global $default_comm_alt = IniRead("sound_switch.ini", "Strings", "DefaultCommDeviceAltLetter", "error")
+Global $ready = IniRead("sound_switch.ini", "Strings", "Ready", "error")
+Global $default = IniRead("sound_switch.ini", "Strings", "Default", "error")
+
 
 For $key = 1 To $hotkeys[0][0]
 	$msg = StringFormat("Setting %s to %s", $hotkeys[$key][1], $hotkeys[$key][0])
@@ -78,6 +88,8 @@ Menus()
 $refresh_item = TrayCreateItem("Refresh available devices")
 $exit_item = TrayCreateItem("Exit")
 
+ReadCommandLine()
+
 While 1
 	$msg = TrayGetMsg()
 	If $msg = 0 Then ContinueLoop
@@ -108,7 +120,7 @@ Func Menus($refetch_states = False)
 	Dim $output_tray[UBound($global_soundstate)][3]
 
 
- 	For $i = 0 To UBound($global_soundstate)-1
+	For $i = 0 To UBound($global_soundstate)-1
 		$config_source1_tray[$i][0] = TrayCreateItem($global_soundstate[$i][5], $config_source1_menu, -1, 1)
 		If $global_soundstate[$i][6] = "Source1" Then
 			TrayItemSetState(-1, $TRAY_CHECKED)
@@ -282,7 +294,7 @@ Func ScrollDefault()
 	$states = ItemStates()
 	;Find current default
 	For $i = 0 To UBound($states) - 1
-		If $states[$i][4] = "Default Device" Then
+		If $states[$i][4] = $default_dev Then
 			$curr_def = $i
 			ExitLoop
 		EndIf
@@ -306,7 +318,7 @@ Func ScrollDevice()
 	$states = ItemStates()
 	;Find current default
 	For $i = 0 To UBound($states) - 1
-		If $states[$i][4] = "Default Device" Then
+		If $states[$i][4] = $default_dev Then
 			$curr_def = $i
 			ExitLoop
 		EndIf
@@ -330,14 +342,14 @@ Func ScrollComm()
 	;Find current default
 	$curr_def = False
 	For $i = 0 To UBound($states) - 1
-		If $states[$i][4] = "Default Communications Device" Then
+		If $states[$i][4] = $default_comm Then
 			$curr_def = $i
 			ExitLoop
 		EndIf
 	Next
 	If Not $curr_def Then
 		For $i = 0 To UBound($states) - 1
-			If $states[$i][4] = "Default Device" Then
+			If $states[$i][4] = $default_dev Then
 				$curr_def = $i
 				ExitLoop
 			EndIf
@@ -384,7 +396,7 @@ Func InfoMessage($states)
 			$defcomm = $states[$i][5]
 		EndIf
 	Next
-	Return "Default Device: " & $defdev & @CRLF & "Default Comm: " & $defcomm
+	Return $default_dev & ": " & $defdev & @CRLF & $default_comm & ": " & $defcomm
 EndFunc
 
 Func TipTray($states)
@@ -420,7 +432,7 @@ Func SetAsDefaultComm($item)
 	If IsReady($item) Then
 		ControlListView($title, $text, $ctrl, "Select", $item)
 		If GetOS() = "7" Then
-			ControlSend($title, $text, "Button2", "{DOWN}c")
+			ControlSend($title, $text, "Button2", "{DOWN}" & $default_comm_alt)
 		ElseIf GetOS() = "Vista" Then
 			SetAsDefault($item)
 		EndIf
@@ -435,7 +447,7 @@ Func SetAsDefaultDevice($item)
 	If IsReady($item) Then
 		ControlListView($title, $text, $ctrl, "Select", $item)
 		If GetOS() = "7" Then
-			ControlSend($title, $text, "Button2", "{DOWN}d")
+			ControlSend($title, $text, "Button2", "{DOWN}" & $default_dev_alt)
 		ElseIf GetOS() = "Vista" Then
 			SetAsDefault($item)
 		EndIf
@@ -459,7 +471,7 @@ EndFunc
 Func GetReady($items)
 ;~ Pick first device with Ready status from $items
 	For $i = 0 To UBound($items) - 1
-		If $items[$i][4] = "Ready" Then Return $i
+		If $items[$i][4] = $ready Then Return $i
 	Next
 	Return -1
 EndFunc   ;==>GetReady
@@ -481,17 +493,17 @@ EndFunc   ;==>GetOS
 
 Func IsReady($item, $states = False)
 	If Not $states Then $states = ItemStates()
-	If $states[$item][4] = "Ready" Then Return True
-	If StringInStr($states[$item][4], "Default") Then Return True
+	If $states[$item][4] = $ready Then Return True
+	If StringInStr($states[$item][4], $default) Then Return True
 	Return False
 EndFunc   ;==>IsReady
 
 Func ItemStates()
 	;--------------------------------------------------------------
-	;	Name: 			ItemStates
-	;	Description: 	Opens Sound applet and gets states of all devices
-	;	Returns:		Array where each row corresponds to a sound device and the columns are:
-	;					Default Comm, Default Dev, Name, Description, State, Name + Description, Source designation
+	; 	Name:	 		ItemStates
+	; 	Description: 	Opens Sound applet and gets states of all devices
+	; 	Returns: 		Array where each row corresponds to a sound device and the columns are:
+	; 					Default Comm, Default Dev, Name, Description, State, Name + Description, Source designation
 	;--------------------------------------------------------------
 	If Not WinExists($title, $text) Then
 		OpenSound()
@@ -522,14 +534,14 @@ Func ItemStates()
 			$item_states[$i][6] = "Source2"
 		EndIf
 
-		If $device_status = "Default Device" Then
+		If $device_status = $default_dev Then
 			$item_states[$i][0] = True
 			$found_def = $i
 		Else
 			$item_states[$i][0] = False
 		EndIf
 
-		If $device_status = "Default Communications Device" Then
+		If $device_status = $default_comm Then
 			$item_states[$i][1] = True
 			$found_comm = True
 		Else
@@ -605,6 +617,21 @@ EndFunc
 
 
 #endregion Info functions
+
+#region Command Line Parameters functions
+
+Func ReadCommandLine()
+	;only read one/first parameter
+	If $CmdLine[0] > 0 Then
+		If $CmdLine[1] = "Set1" Then
+			SetDefaultSource1()
+		ElseIf $CmdLine[1] = "Set2" Then
+			SetDefaultSource2()
+		EndIf
+	EndIf
+EndFunc
+
+#endregion Command Line Parameters functions
 
 #region Helper functions
 Func out($msg)
