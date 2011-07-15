@@ -2,3 +2,8 @@
 test*.*
 *.exe
 *.zip
+.idea/
+*.dll
+Lib/
+Scripts/
+build/
