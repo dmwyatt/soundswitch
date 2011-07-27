@@ -1,9 +1,4 @@
 /test
 test*.*
-*.exe
 *.zip
-.idea/
-*.dll
-Lib/
-Scripts/
-build/
+soundswitch.exe
