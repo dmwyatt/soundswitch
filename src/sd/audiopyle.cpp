@@ -42,6 +42,6 @@ int main(int argc, char** argv)
 	ap::DevicePrinter printer(GetOptions(argc, argv));
 	printer.Print();
 
-
+	fflush(stdout);
 	return 0;
 }
