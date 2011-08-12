@@ -72,6 +72,8 @@ If Not $global_soundstate Then
 	ItemStates()
 EndIf
 
+TraySetToolTip(InfoMessage($global_soundstate))
+
 TraySetClick(8)
 ;Build source config menus
 Global $config_menu = TrayCreateMenu("Config Sources")
@@ -89,9 +91,6 @@ $refresh_item = TrayCreateItem("Refresh available devices")
 $exit_item = TrayCreateItem("Exit")
 
 ReadCommandLine()
-
-$states = ItemStates()
-TraySetToolTip(InfoMessage($states))
 
 While 1
 	$msg = TrayGetMsg()
