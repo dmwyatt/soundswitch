@@ -43,6 +43,8 @@ Global $display_tray_tip = Int(IniRead("sound_switch.ini", "Options", "DisplayTr
 
 Global $title = IniRead("sound_switch.ini", "Strings", "WindowsTitle", "error")
 Global $text = IniRead("sound_switch.ini", "Strings", "WindowsTab", "error")
+Global $speakerCountTitle = IniRead("sound_switch.ini", "Strings", "SpeakerCountTitle", "error")
+Global $speakerCountTextBegin = IniRead("sound_switch.ini", "Strings", "SpeakerCountTextBegin", "error")
 Global $default_dev = IniRead("sound_switch.ini", "Strings", "DefaultDevice", "error")
 Global $default_dev_alt = IniRead("sound_switch.ini", "Strings", "DefaultDeviceAltLetter", "error")
 Global $default_comm = IniRead("sound_switch.ini", "Strings", "DefaultCommDevice", "error")
@@ -189,16 +191,16 @@ Func SwitchSpeakerCount()
 	ControlListView($title, $text, $ctrl, "Select", $device)
 	If ControlCommand($title, $text, "Button1", "IsEnabled") Then
 		ControlClick($title, $text, "Button1")
-		WinWait("Speaker Setup", "Select the speaker setup below")
-		$sel = ControlCommand("Speaker Setup", "Select the speaker setup below", "ListBox1", "GetCurrentSelection")
+		WinWait($speakerCountTitle, $speakerCountTextBegin)
+		$sel = ControlCommand($speakerCountTitle, $speakerCountTextBegin, "ListBox1", "GetCurrentSelection")
 		If $sel == $Set1 Then
 			$select_this = $Set2
 		Else
 			$select_this = $Set1
 		EndIf
-		ControlCommand("Speaker Setup", "Select the speaker setup below", "ListBox1", "SelectString", $select_this)
-		While WinExists("Speaker Setup", "")
-			ControlClick("Speaker Setup", "", "Button1")
+		ControlCommand($speakerCountTitle, $speakerCountTextBegin, "ListBox1", "SelectString", $select_this)
+		While WinExists($speakerCountTitle, "")
+			ControlClick($speakerCountTitle, "", "Button1")
 			Sleep(50)
 		WEnd
 	EndIf
