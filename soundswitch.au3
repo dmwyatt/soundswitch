@@ -74,6 +74,8 @@ If Not $global_soundstate Then
 	ItemStates()
 EndIf
 
+TraySetToolTip(InfoMessage($global_soundstate))
+
 TraySetClick(8)
 ;Build source config menus
 Global $config_menu = TrayCreateMenu("Config Sources")
@@ -416,7 +418,6 @@ Func SetAsDefault($item)
 	If IsReady($item, $global_soundstate) Then
 		ControlListView($title, $text, $ctrl, "Select", $item)
 		ControlClick($title, $text, "Button2", "primary")
-		Notify($global_soundstate)
 	Else
 		MsgBox(0, "Soundswitch", "Device not in 'Ready' state")
 		If $opened = 0 Then
@@ -424,6 +425,8 @@ Func SetAsDefault($item)
 		EndIf
 		Return -1
 	EndIf
+	$states = ItemStates()
+	Notify($states)
 	If $opened = 0 Then
 		CloseSound()
 	EndIf
