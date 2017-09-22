@@ -59,7 +59,7 @@ For $key = 1 To $hotkeys[0][0]
 	If $err == 0 Then
 		$errmsg_fmt = "Error setting %s to %s."
 ;~ 		MsgBox(16, "SoundSwitch Error", StringFormat($errmsg_fmt, $hotkeys[$key][0], $hotkeys[$key][1]))
-		TrayTip("Soundswitch", StringFormat($errmsg_fmt, $hotkeys[$key][0], $hotkeys[$key][1]), True, 3)
+		TrayTip("SoundSwitch", StringFormat($errmsg_fmt, $hotkeys[$key][0], $hotkeys[$key][1]), True, 3)
 	EndIf
 Next
 
@@ -97,7 +97,7 @@ ReadCommandLine()
 While 1
 	$msg = TrayGetMsg()
 	If $msg = 0 Then ContinueLoop
-	If $msg = $TRAY_EVENT_PRIMARYDOWN Then SwitchDefault()
+	If $msg = $TRAY_EVENT_PRIMARYDOUBLE Then SwitchDefault()
 	For $i = 0 to UBound($global_soundstate)-1
 		If $msg = $config_source1_tray[$i][0] Then
 			$Source1 = $config_source1_tray[$i][1]
@@ -206,6 +206,8 @@ Func SwitchSpeakerCount()
 			Sleep(50)
 		WEnd
 	EndIf
+
+	If $display_tray_tip Then TrayTip("SoundSwitch", $speakerCountTitle & ": " & $select_this, 1)
 	CloseSound()
 EndFunc   ;==>SwitchSpeakerCount
 
@@ -405,7 +407,7 @@ EndFunc
 
 Func TipTray($states)
 	$msg = InfoMessage($states)
-	TrayTip("Soundswitch", $msg, 1)
+	TrayTip("SoundSwitch", $msg, 1)
 EndFunc
 
 Func Notify($states, $force_tip=False)
@@ -419,7 +421,7 @@ Func SetAsDefault($item)
 		ControlListView($title, $text, $ctrl, "Select", $item)
 		ControlClick($title, $text, "Button2", "primary")
 	Else
-		MsgBox(0, "Soundswitch", "Device not in 'Ready' state")
+		MsgBox(0, "SoundSwitch", "Device not in 'Ready' state")
 		If $opened = 0 Then
 			CloseSound()
 		EndIf
@@ -442,7 +444,7 @@ Func SetAsDefaultComm($item)
 			SetAsDefault($item)
 		EndIf
 	Else
-		MsgBox(0, "Soundswitch", "Device not in 'Ready' state")
+		MsgBox(0, "SoundSwitch", "Device not in 'Ready' state")
 	EndIf
 	$states = ItemStates()
 	Notify($states)
@@ -457,7 +459,7 @@ Func SetAsDefaultDevice($item)
 			SetAsDefault($item)
 		EndIf
 	Else
-		MsgBox(0, "Soundswitch", "Device not in 'Ready' state")
+		MsgBox(0, "SoundSwitch", "Device not in 'Ready' state")
 	EndIf
 	$states = ItemStates()
 	Notify($states)
