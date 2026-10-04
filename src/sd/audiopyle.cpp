@@ -1,4 +1,4 @@
-/* 
+/*
 Audiopyle
 Author: Chris Penrose (chris@pleasesendhelp.com)
 Date: July 15 2011
@@ -6,42 +6,52 @@ Description: Displays a list of audio devices. Written for Thermopyle as
 per request: http://forums.somethingawful.com/showthread.php?threadid=2415898&pagenumber=57#post393575494
 */
 
-#include "DevicePrinter.h"
+#include "Endpoints.h"
+#include "Options.h"
+#include "Output.h"
 
-ap::DevicePrinter::Options GetOptions(int argc, char** argv)
+#include <algorithm>
+#include <cstdio>
+#include <exception>
+
+namespace
 {
-	ap::DevicePrinter::Options options;
+	const int EXIT_FAILED = 1;
+	const int EXIT_USAGE = 2;
 
-	for(int i = 0; i < argc; i++)
+	void PrintDevices(const ap::Options& options)
 	{
-		if(strcmp(argv[i], "-f") == 0)
-		{
-			options.StateMask = 0;
-			options.DataFlow = 0;
-			for(int j = i+1; j < argc; j++)
-			{
-				if(argv[j][0] == '-') { i = j-1; break; }
-				if(strcmp(argv[j], "active") == 0) options.StateMask |= DEVICE_STATE_ACTIVE;
-				else if(strcmp(argv[j], "disabled") == 0) options.StateMask |= DEVICE_STATE_DISABLED;
-				else if(strcmp(argv[j], "notpresent") == 0) options.StateMask |= DEVICE_STATE_NOTPRESENT;
-				else if(strcmp(argv[j], "unplugged") == 0) options.StateMask |= DEVICE_STATE_UNPLUGGED;
-				else if(strcmp(argv[j], "capture") == 0) options.DataFlow |= ap::Device::CAPTURE;
-				else if(strcmp(argv[j], "render") == 0) options.DataFlow |= ap::Device::RENDER;
-			}
-			if(options.StateMask == 0) options.StateMask = DEVICE_STATEMASK_ALL;
-			if(options.DataFlow == 0) options.DataFlow = ap::Device::CAPTURE | ap::Device::RENDER;
-		}
-		else if(strcmp(argv[i], "-id") == 0) options.ShowIds = true;
-	}
+		std::vector<ap::Device> devices = ap::ListDevices(options.Filter);
+		std::sort(devices.begin(), devices.end(), ap::ListedBefore);
 
-	return options;
+		std::vector<std::wstring> lines;
+		for(const ap::Device& device : devices)
+		{
+			lines.push_back(ap::FormatDevice(device, options.ShowIds));
+		}
+		ap::WriteLines(stdout, lines);
+	}
 }
 
 int main(int argc, char** argv)
 {
-	ap::DevicePrinter printer(GetOptions(argc, argv));
-	printer.Print();
+	try
+	{
+		const std::vector<std::string> args(argv + 1, argv + argc);
+		const ap::Options options = ap::ParseOptions(args);
 
-	fflush(stdout);
-	return 0;
+		if(options.ShowHelp) fputs(ap::USAGE, stdout);
+		else PrintDevices(options);
+		return 0;
+	}
+	catch(const ap::UsageError& error)
+	{
+		fprintf(stderr, "sd: %s\n\n%s", error.what(), ap::USAGE);
+		return EXIT_USAGE;
+	}
+	catch(const std::exception& error)
+	{
+		fprintf(stderr, "sd: %s\n", error.what());
+		return EXIT_FAILED;
+	}
 }

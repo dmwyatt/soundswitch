@@ -2,3 +2,4 @@
 test*.*
 *.zip
 soundswitch.exe
+/src/sd/build/
