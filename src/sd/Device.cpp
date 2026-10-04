@@ -1,120 +1,85 @@
 #include "Device.h"
-#include <sstream>
+
+#include <stdexcept>
+#include <tuple>
+#include <vector>
 
 namespace ap
 {
-	const wchar_t* const Device::UNKNOWN_PROPERTY = L"[unknown]";
+	namespace
+	{
+		const std::wstring UNKNOWN = L"[unknown]";
 
-	Device::Device(IMMDevice* const pDevice, const EDataFlow dataFlow, const DefaultDevices& defaultDevices)
-		: mDataFlow(dataFlow), mRoles(0)
-	{
-		GetState(pDevice);
-		GetId(pDevice);
-		GetProperties(pDevice);
-		GetRoles(defaultDevices);
-	}
-
-	void Device::GetPropertyString(IPropertyStore* const pProps, REFPROPERTYKEY key, wchar_t** string) const
-	{
-		PROPVARIANT prop;
-		if(FAILED(pProps->GetValue(key, &prop))) *string = L"[unknown]";
-		else *string = prop.pwszVal;
-	}
-
-	void Device::GetRoles(const DefaultDevices& defaultDevices)
-	{
-		if(mId.compare(defaultDevices.Console) == 0) mRoles |= CONSOLE;
-		if(mId.compare(defaultDevices.Multimedia) == 0) mRoles |= MULTIMEDIA;
-		if(mId.compare(defaultDevices.Communications) == 0) mRoles |= COMMUNICATIONS;
-	}
-
-	std::wstring Device::RoleString() const
-	{
-		bool sep = false;
-		std::wstring out;
-		if((mRoles & CONSOLE) == CONSOLE) { out.append(L",Console"); sep = true; }
-		if((mRoles & MULTIMEDIA) == MULTIMEDIA) { sep ? out.push_back('|') : out.push_back(','); out.append(L"Multimedia"); sep = true; }	
-		if((mRoles & COMMUNICATIONS) == COMMUNICATIONS) { sep ? out.push_back('|') : out.push_back(','); out.append(L"Communications"); sep = true; }
-		return out;
-	}
-	
-	void Device::GetProperties(IMMDevice* const pDevice)
-	{
-		// Open property store
-		IPropertyStore* props = 0;
-		if(FAILED(pDevice->OpenPropertyStore(STGM_READ, &props)))
+		std::wstring Join(const std::vector<std::wstring>& parts, const wchar_t separator)
 		{
-			mName = UNKNOWN_PROPERTY;
-			mDesc = UNKNOWN_PROPERTY;
-			return;
+			std::wstring joined;
+			for(size_t i = 0; i < parts.size(); i++)
+			{
+				if(i > 0) joined += separator;
+				joined += parts[i];
+			}
+			return joined;
 		}
 
-		// Get friendly name
-		wchar_t* sName = 0;
-		GetPropertyString(props, PKEY_DeviceInterface_FriendlyName, &sName);
-		mName = sName;
-
-		// Get description
-		wchar_t* sDesc = 0;
-		GetPropertyString(props, PKEY_Device_DeviceDesc, &sDesc);
-		mDesc = sDesc;
-	}
-
-	void Device::GetState(IMMDevice* const pDevice)
-	{
-		DWORD dwState;
-		if(FAILED(pDevice->GetState(&dwState))) { mState = UNKNOWN; return; }
-
-		switch(dwState)
+		std::wstring FlowName(const DataFlow flow)
 		{
-		case DEVICE_STATE_ACTIVE: mState = ACTIVE; return;
-		case DEVICE_STATE_DISABLED: mState = DISABLED; return;
-		case DEVICE_STATE_NOTPRESENT: mState = NOTPRESENT; return;
-		case DEVICE_STATE_UNPLUGGED: mState = UNPLUGGED; return;
-		default: mState = UNKNOWN; return;
+			switch(flow)
+			{
+			case DataFlow::Render: return L"Render";
+			case DataFlow::Capture: return L"Capture";
+			}
+			throw std::logic_error("Unhandled data flow");
+		}
+
+		std::wstring StateName(const std::optional<DeviceState> state)
+		{
+			if(!state) return UNKNOWN;
+
+			switch(*state)
+			{
+			case DeviceState::Active: return L"Active";
+			case DeviceState::Disabled: return L"Disabled";
+			case DeviceState::NotPresent: return L"Not present";
+			case DeviceState::Unplugged: return L"Unplugged";
+			}
+			throw std::logic_error("Unhandled device state");
+		}
+
+		std::wstring RoleNames(const DeviceRoles& roles)
+		{
+			std::vector<std::wstring> names;
+			if(roles.Console) names.push_back(L"Console");
+			if(roles.Multimedia) names.push_back(L"Multimedia");
+			if(roles.Communications) names.push_back(L"Communications");
+			return Join(names, L'|');
 		}
 	}
-	void Device::GetId(IMMDevice* const pDevice)
+
+	DeviceRoles RolesFor(const std::wstring& id, const DefaultDevices& defaults)
 	{
-		wchar_t* sId = 0;
-		if(FAILED(pDevice->GetId(&sId))) { mId = UNKNOWN_PROPERTY; return; }
-		mId = sId;
+		return {
+			.Console = defaults.Console == id,
+			.Multimedia = defaults.Multimedia == id,
+			.Communications = defaults.Communications == id };
 	}
-	std::wstring Device::StateString() const
+
+	bool ListedBefore(const Device& lhs, const Device& rhs)
 	{
-		switch(mState)
-		{
-		case ACTIVE: return L"Active";
-		case DISABLED: return L"Disabled";
-		case NOTPRESENT: return L"Not present";
-		case UNPLUGGED: return L"Unplugged";
-		default: return UNKNOWN_PROPERTY;
-		}
+		return std::tie(lhs.Flow, lhs.Id) < std::tie(rhs.Flow, rhs.Id);
 	}
-	std::wstring Device::DataFlowString() const
+
+	std::wstring FormatDevice(const Device& device, const bool showId)
 	{
-		switch(mDataFlow)
-		{
-		case eCapture: return L"Capture";
-		case eRender: return L"Render";
-		default: return UNKNOWN_PROPERTY;
-		}
+		std::vector<std::wstring> fields;
+		if(showId) fields.push_back(device.Id);
+		fields.push_back(device.Name.value_or(UNKNOWN));
+		fields.push_back(device.Description.value_or(UNKNOWN));
+		fields.push_back(FlowName(device.Flow));
+		fields.push_back(StateName(device.State));
+
+		const std::wstring roles = RoleNames(device.Roles);
+		if(!roles.empty()) fields.push_back(roles);
+
+		return Join(fields, L',');
 	}
-	std::wstring Device::ToString(const bool showId) const
-	{
-		std::wstringstream ss;
-		if(showId) ss << mId << ',';
-		ss << mName << ',' << mDesc << ',' << DataFlowString() << ',' << StateString() << RoleString();
-		return ss.str();
-	}
-	Device::Device(const Device& rhs)
-		: mId(rhs.mId), mName(rhs.mName), mDesc(rhs.mDesc), mDataFlow(rhs.mDataFlow), mRoles(rhs.mRoles), mState(rhs.mState)
-	{}
-	bool Device::operator<(const Device& rhs) const
-	{
-		if(mDataFlow < rhs.mDataFlow) return true;
-		if(mId.compare(rhs.mId) < 0) return true;
-		return false;
-	}
-	
 }
