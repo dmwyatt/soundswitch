@@ -50,3 +50,25 @@ TEST_CASE("WriteLines writes nothing for no lines")
 {
 	CHECK(BytesWritten({}).empty());
 }
+
+TEST_CASE("WriteLines writes U+FFFF, whose value the C runtime also uses to report a failed write")
+{
+	const std::wstring line = { L'a', static_cast<wchar_t>(0xFFFF), L'z' };
+
+	CHECK(BytesWritten({ L"first", line, L"last" }) == "first\r\na\xEF\xBF\xBFz\r\nlast\r\n");
+}
+
+TEST_CASE("WriteLines writes the whole of a line that holds a null character")
+{
+	const std::wstring line = { L'a', L'\0', L'z' };
+	const std::string expected = { 'a', '\0', 'z', '\r', '\n', 'l', 'a', 's', 't', '\r', '\n' };
+
+	CHECK(BytesWritten({ line, L"last" }) == expected);
+}
+
+TEST_CASE("WriteLines writes the replacement character for half of a surrogate pair")
+{
+	const std::wstring line = { L'a', static_cast<wchar_t>(0xD800), L'z' };
+
+	CHECK(BytesWritten({ line }) == "a\xEF\xBF\xBDz\r\n");
+}

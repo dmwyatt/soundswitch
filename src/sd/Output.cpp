@@ -22,7 +22,10 @@ namespace ap
 
 		for(const std::wstring& line : lines)
 		{
-			ThrowIf(fputws((line + L'\n').c_str(), stream) < 0, "Failed to write output");
+			// One character at a time, judged by the stream's error flag: fputws stops at a null character,
+			// and both it and fputwc's return value mistake U+FFFF for a failed write.
+			for(const wchar_t character : line + L'\n') fputwc(character, stream);
+			ThrowIf(ferror(stream) != 0, "Failed to write output");
 		}
 		ThrowIf(fflush(stream) != 0, "Failed to write output");
 	}
