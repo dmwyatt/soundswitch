@@ -65,6 +65,7 @@ namespace ap
 	bool ListedBefore(const Device& lhs, const Device& rhs);
 
 	// One line of output: [ID,]NAME,DESCRIPTION,FLOW,STATE[,ROLE|ROLE...]
-	// A field holding a comma, quote or line break is quoted as in CSV.
+	// Control characters in a field become spaces, so a device is always exactly one line.
+	// A field holding a comma or quote is quoted as in CSV.
 	std::wstring FormatDevice(const Device& device, bool showId);
 }

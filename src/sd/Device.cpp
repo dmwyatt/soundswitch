@@ -1,5 +1,6 @@
 #include "Device.h"
 
+#include <algorithm>
 #include <stdexcept>
 #include <tuple>
 #include <vector>
@@ -21,10 +22,22 @@ namespace ap
 			return joined;
 		}
 
-		// Quotes a field the way CSV does when it holds a character that would otherwise split the line.
-		std::wstring CsvField(const std::wstring& text)
+		// Control characters and the Unicode line and paragraph separators.
+		bool IsControl(const wchar_t character)
 		{
-			if(text.find_first_of(L",\"\r\n") == std::wstring::npos) return text;
+			const bool c0 = character < 0x20 || character == 0x7F;
+			const bool c1 = character >= 0x80 && character <= 0x9F;
+			const bool separator = character == 0x2028 || character == 0x2029;
+			return c0 || c1 || separator;
+		}
+
+		// Device text comes from hardware and drivers, so it is not trusted to stay in its field.
+		// Control characters, which could start a new line or drive a terminal, become spaces,
+		// and a field holding a comma or quote is quoted the way CSV quotes it.
+		std::wstring Field(std::wstring text)
+		{
+			std::replace_if(text.begin(), text.end(), IsControl, L' ');
+			if(text.find_first_of(L",\"") == std::wstring::npos) return text;
 
 			std::wstring quoted = L"\"";
 			for(const wchar_t character : text)
@@ -85,9 +98,9 @@ namespace ap
 	std::wstring FormatDevice(const Device& device, const bool showId)
 	{
 		std::vector<std::wstring> fields;
-		if(showId) fields.push_back(CsvField(device.Id));
-		fields.push_back(CsvField(device.Name.value_or(UNKNOWN)));
-		fields.push_back(CsvField(device.Description.value_or(UNKNOWN)));
+		if(showId) fields.push_back(Field(device.Id));
+		fields.push_back(Field(device.Name.value_or(UNKNOWN)));
+		fields.push_back(Field(device.Description.value_or(UNKNOWN)));
 		fields.push_back(FlowName(device.Flow));
 		fields.push_back(StateName(device.State));
 

@@ -112,10 +112,21 @@ TEST_CASE("FormatDevice quotes a field that contains a quote, doubling the quote
 	CHECK(FormatDevice(device, false) == L"\"The \"\"Good\"\" Card\",Speakers,Render,Active"s);
 }
 
-TEST_CASE("FormatDevice quotes a field that contains a line break")
+TEST_CASE("FormatDevice replaces line breaks with spaces so a device cannot span lines")
 {
 	Device device = Speakers();
-	device.Id = L"first\nsecond";
+	device.Id = L"first\r\nsecond";
+	device.Name = L"Realtek Audio\nFake Adapter,Fake Device,Render,Active";
+	device.Description = L"Left Right End";
 
-	CHECK(FormatDevice(device, true) == L"\"first\nsecond\",Realtek Audio,Speakers,Render,Active"s);
+	CHECK(FormatDevice(device, true) == L"first  second,\"Realtek Audio Fake Adapter,Fake Device,Render,Active\",Left Right End,Render,Active"s);
+}
+
+TEST_CASE("FormatDevice replaces control characters with spaces so a device cannot drive the terminal")
+{
+	Device device = Speakers();
+	device.Name = L"Red\x1b[31m";
+	device.Description = L"Tab\tBell\aDel\x7fNext\u0085";
+
+	CHECK(FormatDevice(device, false) == L"Red [31m,Tab Bell Del Next ,Render,Active"s);
 }
