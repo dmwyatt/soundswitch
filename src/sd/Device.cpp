@@ -21,6 +21,20 @@ namespace ap
 			return joined;
 		}
 
+		// Quotes a field the way CSV does when it holds a character that would otherwise split the line.
+		std::wstring CsvField(const std::wstring& text)
+		{
+			if(text.find_first_of(L",\"\r\n") == std::wstring::npos) return text;
+
+			std::wstring quoted = L"\"";
+			for(const wchar_t character : text)
+			{
+				if(character == L'"') quoted += L'"';
+				quoted += character;
+			}
+			return quoted + L'"';
+		}
+
 		std::wstring FlowName(const DataFlow flow)
 		{
 			switch(flow)
@@ -71,9 +85,9 @@ namespace ap
 	std::wstring FormatDevice(const Device& device, const bool showId)
 	{
 		std::vector<std::wstring> fields;
-		if(showId) fields.push_back(device.Id);
-		fields.push_back(device.Name.value_or(UNKNOWN));
-		fields.push_back(device.Description.value_or(UNKNOWN));
+		if(showId) fields.push_back(CsvField(device.Id));
+		fields.push_back(CsvField(device.Name.value_or(UNKNOWN)));
+		fields.push_back(CsvField(device.Description.value_or(UNKNOWN)));
 		fields.push_back(FlowName(device.Flow));
 		fields.push_back(StateName(device.State));
 

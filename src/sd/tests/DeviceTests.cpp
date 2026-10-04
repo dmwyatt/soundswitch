@@ -95,3 +95,27 @@ TEST_CASE("FormatDevice shows [unknown] for a missing name, description or state
 
 	CHECK(FormatDevice(device, false) == L"[unknown],[unknown],Render,[unknown]"s);
 }
+
+TEST_CASE("FormatDevice quotes a field that contains a comma")
+{
+	Device device = Speakers();
+	device.Description = L"Speakers (Realtek, Front)";
+
+	CHECK(FormatDevice(device, false) == L"Realtek Audio,\"Speakers (Realtek, Front)\",Render,Active"s);
+}
+
+TEST_CASE("FormatDevice quotes a field that contains a quote, doubling the quote")
+{
+	Device device = Speakers();
+	device.Name = L"The \"Good\" Card";
+
+	CHECK(FormatDevice(device, false) == L"\"The \"\"Good\"\" Card\",Speakers,Render,Active"s);
+}
+
+TEST_CASE("FormatDevice quotes a field that contains a line break")
+{
+	Device device = Speakers();
+	device.Id = L"first\nsecond";
+
+	CHECK(FormatDevice(device, true) == L"\"first\nsecond\",Realtek Audio,Speakers,Render,Active"s);
+}
