@@ -130,3 +130,22 @@ TEST_CASE("FormatDevice replaces control characters with spaces so a device cann
 
 	CHECK(FormatDevice(device, false) == L"Red [31m,Tab Bell Del Next ,Render,Active"s);
 }
+
+TEST_CASE("FormatDevice replaces text-direction controls with spaces so a name cannot reorder the rest of its line")
+{
+	Device device = Speakers();
+	// A right-to-left override and its terminator, then a left-to-right isolate and its terminator.
+	device.Name = L"Card‮evit‬";
+	device.Description = L"⁦Speakers⁩";
+
+	CHECK(FormatDevice(device, false) == L"Card evit , Speakers ,Render,Active"s);
+}
+
+TEST_CASE("FormatDevice keeps right-to-left text and the joiners its scripts are written with")
+{
+	Device device = Speakers();
+	// A Persian word, which is spelled with a zero-width non-joiner.
+	device.Description = L"می‌خواهم";
+
+	CHECK(FormatDevice(device, false) == L"Realtek Audio,می‌خواهم,Render,Active"s);
+}

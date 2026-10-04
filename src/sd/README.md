@@ -15,8 +15,8 @@ Render or Capture. ROLES are the roles the device is the default device
 for (Console, Multimedia, Communications), joined with "|".
 
 A field that contains a comma or a quote is quoted as in CSV. Control
-characters in a field are replaced with spaces, so every line is
-exactly one device.
+and text-direction characters in a field are replaced with spaces, so
+every line is exactly one device.
 
 Options:
   -f FILTER...  List only matching devices. State filters: active,

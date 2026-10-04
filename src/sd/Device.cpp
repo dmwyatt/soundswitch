@@ -1,8 +1,10 @@
 #include "Device.h"
 
 #include <algorithm>
+#include <iterator>
 #include <stdexcept>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace ap
@@ -22,21 +24,29 @@ namespace ap
 			return joined;
 		}
 
-		// Control characters and the Unicode line and paragraph separators.
-		bool IsControl(const wchar_t character)
+		// Inclusive ranges of the characters that act on more than the spot they occupy.
+		const std::pair<wchar_t, wchar_t> UNCONFINED[] = {
+			{ L'\x0000', L'\x001F' },  // control characters
+			{ L'\x007F', L'\x009F' },  // delete and the second block of control characters
+			{ L'\x2028', L'\x2029' },  // line and paragraph separators
+			{ L'\x202A', L'\x202E' },  // text-direction embeddings and overrides
+			{ L'\x2066', L'\x2069' } };  // text-direction isolates
+
+		bool IsUnconfined(const wchar_t character)
 		{
-			const bool c0 = character < 0x20 || character == 0x7F;
-			const bool c1 = character >= 0x80 && character <= 0x9F;
-			const bool separator = character == 0x2028 || character == 0x2029;
-			return c0 || c1 || separator;
+			const auto holds = [character](const std::pair<wchar_t, wchar_t>& range)
+			{
+				return character >= range.first && character <= range.second;
+			};
+			return std::any_of(std::begin(UNCONFINED), std::end(UNCONFINED), holds);
 		}
 
 		// Device text comes from hardware and drivers, so it is not trusted to stay in its field.
-		// Control characters, which could start a new line or drive a terminal, become spaces,
-		// and a field holding a comma or quote is quoted the way CSV quotes it.
+		// Characters that could start a new line, drive a terminal or reorder the text around them
+		// become spaces, and a field holding a comma or quote is quoted the way CSV quotes it.
 		std::wstring Field(std::wstring text)
 		{
-			std::replace_if(text.begin(), text.end(), IsControl, L' ');
+			std::replace_if(text.begin(), text.end(), IsUnconfined, L' ');
 			if(text.find_first_of(L",\"") == std::wstring::npos) return text;
 
 			std::wstring quoted = L"\"";
