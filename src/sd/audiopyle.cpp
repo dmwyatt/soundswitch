@@ -8,6 +8,7 @@ per request: http://forums.somethingawful.com/showthread.php?threadid=2415898&pa
 
 #include "Endpoints.h"
 #include "Options.h"
+#include "Output.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -22,10 +23,13 @@ namespace
 	{
 		std::vector<ap::Device> devices = ap::ListDevices(options.Filter);
 		std::sort(devices.begin(), devices.end(), ap::ListedBefore);
+
+		std::vector<std::wstring> lines;
 		for(const ap::Device& device : devices)
 		{
-			wprintf(L"%ls\n", ap::FormatDevice(device, options.ShowIds).c_str());
+			lines.push_back(ap::FormatDevice(device, options.ShowIds));
 		}
+		ap::WriteLines(stdout, lines);
 	}
 }
 
